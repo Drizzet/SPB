@@ -1,6 +1,8 @@
+# from __future__ import division
 import pygame
 import numpy as np
 from numpy import random
+import math
 
 N = 50
 A = 50 * 30
@@ -26,39 +28,75 @@ class Agent(pygame.sprite.Sprite):
         self.state = "alive"
         global N, A
         self.oxygen = t
-        self.speed = 5
+        self.speed = 1
         self.speedmax = 5
-        self.radius = 10
+        self.radius = 20
         self.panic = N / A
-        self.speedvector = np.array([1, 1])
+        self.speedvector = np.array([1.0, 1.0])
+        self.point = [0, 0]
+        self.iteration=random.randint(10,50)
+
+
+    def computeVector(self):
+        # print((float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0))
+        # self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0)
+        # self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / (self.point[0]+ 0.0)
+        self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / 100.0
+        self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / 100.0
 
     def GetPosition(self):
-        return self.rect.center
+        pos = np.array([self.rect.center[0],self.rect.center[1]])
+        return pos
 
     def update(self, survivors, walls, exits):
         global ESCAPED
         global N
         global A
         self.oxygen = self.oxygen - 1
+        print(self.point, self.GetPosition(), self.speedvector)
+        self.computeVector()
         self.move()
+        self.iteration -= 1
+        if(self.iteration<0):
+            self.iteration = random.randint(10, 50)
+            x = random.randint(170, 600)
+            y = random.randint(100, 300)
+            self.point = [x,y]
 
         suma = 0
         n = 0
-        for neighbour in survivors:
+
+        neighbours = list(survivors)
+        neighbours.remove(self)
+
+        for neighbour in neighbours:
             if (pygame.sprite.collide_circle(self, neighbour) == True):
-                # h = (3.14 * self.radius * self.radius * ((N-ESCAPED)/A))
-                suma = suma + neighbour.speedvector
-                n = n + 1
+                if (neighbour.state != "dead"):
+                    self.speedvector = self.speedvector * -1
+                    suma = suma + neighbour.speedvector
+                    n = n + 1
 
         collisions = pygame.sprite.spritecollide(self, walls, False)
         escapes = pygame.sprite.spritecollide(self, exits, False)
 
+        survivorscollisions = pygame.sprite.spritecollide(self, walls, False)
+
         if (escapes):
+            if (escapes[0].GetPosition()[0] - self.GetPosition()[0] < 0):
+                self.speedvector[0] = -1
+            else:
+                self.speedvector[0] = 1
+            if (escapes[0].GetPosition()[1] - self.GetPosition()[1] < 0):
+                self.speedvector[1] = -1
+            else:
+                self.speedvector[1] = 1
             ESCAPED = ESCAPED + 1
-            survivors.remove(self)
+            self.state = "found"
+            # survivors.remove(self)
 
         #        if(n>0):
-        #                 suma = suma.round()
+        #
+        # suma = suma.round()
         #               if ((suma / ([n,n])) != ([0,0])).all() :
         #                   self.speedvector = suma / ([n,n])
         #                   print(self.speedvector,suma,n)
@@ -74,17 +112,18 @@ class Agent(pygame.sprite.Sprite):
         if (self.oxygen == 0):
             global DIED
             DIED = DIED + 1
+            self.state = "dead"
             self.image.fill((250, 0, 0))
             self.speedvector = self.speedvector * ([0, 0])
             # walls.add(Wall(self.GetPosition()[0],self.GetPosition()[1], 10, 10, "dead", (250, 0, 0)))
             # survivors.remove(self)
 
-        if (self.oxygen <= T / 2 and self.oxygen > 0):
+        if (self.oxygen <= T / 2 and self.oxygen > 0 and self.state != "found"):
             self.image.fill((0, 150, 0))
             self.state = "ill"
 
     def move(self):
-        self.rect.center = (self.speedvector[0] + self.rect.center[0], self.speedvector[1] + self.rect.center[1])
+        self.rect.center = (self.speed* round(self.speedvector[0],2) + self.rect.center[0],self.speed* round(self.speedvector[1],2) + self.rect.center[1])
 
 
 class Wall(pygame.sprite.Sprite):
@@ -98,6 +137,9 @@ class Wall(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.type = type
 
+    def GetPosition(self):
+        return self.rect.center
+
 
 survivors = pygame.sprite.Group()
 walls = pygame.sprite.Group()
@@ -108,7 +150,7 @@ walls.add(Wall(400, 350, 500, 10, "horizont", (15, 125, 125)))
 walls.add(Wall(150, 200, 10, 300, "vertical", (15, 125, 125)))
 walls.add(Wall(650, 200, 10, 300, "vertical", (15, 125, 125)))
 
-#sprawdzanie odleglosci 20 jednostek do ok exit
+# sprawdzanie odleglosci 20 jednostek do ok exit
 exits.add(Wall(650, 200, 10, 70, "exit", (15, 125, 125)))
 exits.add(Wall(150, 200, 10, 70, "exit", (15, 125, 125)))
 
@@ -126,15 +168,15 @@ for i in range(N):
 
 # randomowy wektor poruszania
 for person in survivors:
-    a = random.choice([-1, 1])
-    b = random.choice([-1, 1])
-    person.speedvector = person.speedvector * np.array([a, b])
+    x = random.randint(170, 600)
+    y = random.randint(100, 300)
+    person.point =np.array([x, y])
 
 while True:
     screen.fill((255, 255, 255))
-    survivors.draw(screen)
     walls.draw(screen)
     exits.draw(screen)
+    survivors.draw(screen)
 
     label = myfont.render("Time: " + str(Time), 1, (0, 0, 0))
     screen.blit(label, (10, 20))
@@ -145,13 +187,16 @@ while True:
 
     Time = Time + 1
     for agent in survivors:
-        if(agent.oxygen >= 0):
-            agent.update(survivors, walls, exits)
-    if(Time == T):
+        if (agent.oxygen >= 0):
+            if (agent.state != "found"):
+                agent.update(survivors, walls, exits)
+            else:
+                agent.move()
+    if (Time == T):
         pygame.quit()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             # sys.exit()
     pygame.display.update()
-    clock.tick(20)
+    clock.tick(30)
