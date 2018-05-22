@@ -4,7 +4,8 @@ from numpy import random
 
 N = 50
 A = 50 * 30
-T = 500
+T = 1000
+Time = 0
 ESCAPED = 0
 DIED = 0
 pygame.init()
@@ -107,9 +108,15 @@ walls.add(Wall(400, 350, 500, 10, "horizont", (15, 125, 125)))
 walls.add(Wall(150, 200, 10, 300, "vertical", (15, 125, 125)))
 walls.add(Wall(650, 200, 10, 300, "vertical", (15, 125, 125)))
 
-exits.add(Wall(650, 200, 10, 50, "exit", (125, 125, 125)))
-exits.add(Wall(150, 200, 10, 50, "exit", (125, 125, 125)))
+#sprawdzanie odleglosci 20 jednostek do ok exit
+exits.add(Wall(650, 200, 10, 70, "exit", (15, 125, 125)))
+exits.add(Wall(150, 200, 10, 70, "exit", (15, 125, 125)))
+
+exits.add(Wall(650, 200, 20, 50, "exit", (250, 250, 250)))
+exits.add(Wall(150, 200, 20, 50, "exit", (250, 250, 250)))
+
 # survivors.add(Agent(10, 10))
+
 # losowanie polozenia dla Agentow
 for i in range(N):
     x = random.randint(170, 600)
@@ -128,13 +135,20 @@ while True:
     survivors.draw(screen)
     walls.draw(screen)
     exits.draw(screen)
+
+    label = myfont.render("Time: " + str(Time), 1, (0, 0, 0))
+    screen.blit(label, (10, 20))
     label = myfont.render("Escaped: " + str(ESCAPED), 1, (0, 0, 0))
-    screen.blit(label, (10, 100))
+    screen.blit(label, (10, 40))
     label = myfont.render("Died: " + str(DIED), 1, (0, 0, 0))
-    screen.blit(label, (10, 120))
+    screen.blit(label, (10, 60))
+
+    Time = Time + 1
     for agent in survivors:
         if(agent.oxygen >= 0):
             agent.update(survivors, walls, exits)
+    if(Time == T):
+        pygame.quit()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
