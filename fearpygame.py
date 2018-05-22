@@ -4,7 +4,7 @@ import numpy as np
 from numpy import random
 import math
 
-N = 50
+N = 100
 A = 50 * 30
 T = 1000
 Time = 0
@@ -30,7 +30,7 @@ class Agent(pygame.sprite.Sprite):
         self.oxygen = t
         self.speed = 1
         self.speedmax = 5
-        self.radius = 20
+        self.radius = 10
         self.panic = N / A
         self.speedvector = np.array([1.0, 1.0])
         self.point = [0, 0]
@@ -38,9 +38,6 @@ class Agent(pygame.sprite.Sprite):
 
 
     def computeVector(self):
-        # print((float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0))
-        # self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0)
-        # self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / (self.point[0]+ 0.0)
         self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / 100.0
         self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / 100.0
 
@@ -53,15 +50,16 @@ class Agent(pygame.sprite.Sprite):
         global N
         global A
         self.oxygen = self.oxygen - 1
-        print(self.point, self.GetPosition(), self.speedvector)
+        # print(self.point, self.GetPosition(), self.speedvector)
         self.computeVector()
-        self.move()
+
         self.iteration -= 1
         if(self.iteration<0):
             self.iteration = random.randint(10, 50)
             x = random.randint(170, 600)
             y = random.randint(100, 300)
             self.point = [x,y]
+            self.point = [1000, 300]
 
         suma = 0
         n = 0
@@ -69,45 +67,29 @@ class Agent(pygame.sprite.Sprite):
         neighbours = list(survivors)
         neighbours.remove(self)
 
-        for neighbour in neighbours:
-            if (pygame.sprite.collide_circle(self, neighbour) == True):
-                if (neighbour.state != "dead"):
-                    self.speedvector = self.speedvector * -1
-                    suma = suma + neighbour.speedvector
-                    n = n + 1
+        neighbourcollisions = pygame.sprite.spritecollide(self, neighbours, False)
+        for i in neighbourcollisions:
+            pass
+            # print(i.GetPosition())
+        # if(neighbourcollisions):
+        #     print(neighbourcollisions)
+            pass
+            # self.speedvector = self.speedvector * 0.5
 
         collisions = pygame.sprite.spritecollide(self, walls, False)
-        escapes = pygame.sprite.spritecollide(self, exits, False)
-
-        survivorscollisions = pygame.sprite.spritecollide(self, walls, False)
-
-        if (escapes):
-            if (escapes[0].GetPosition()[0] - self.GetPosition()[0] < 0):
-                self.speedvector[0] = -1
-            else:
-                self.speedvector[0] = 1
-            if (escapes[0].GetPosition()[1] - self.GetPosition()[1] < 0):
-                self.speedvector[1] = -1
-            else:
-                self.speedvector[1] = 1
-            ESCAPED = ESCAPED + 1
-            self.state = "found"
-            # survivors.remove(self)
-
-        #        if(n>0):
-        #
-        # suma = suma.round()
-        #               if ((suma / ([n,n])) != ([0,0])).all() :
-        #                   self.speedvector = suma / ([n,n])
-        #                   print(self.speedvector,suma,n)
-
         if (collisions):
-            if (collisions[0].type == "horizont"):
-                self.speedvector = self.speedvector * ([1, -1])
             if (collisions[0].type == "vertical"):
-                self.speedvector = self.speedvector * ([-1, 1])
-            if (collisions[0].type == "dead"):
-                self.speedvector = self.speedvector * ([-1, -1])
+                if (self.GetPosition()[1]>=200):
+                    self.point = [self.GetPosition()[0] - 20, self.GetPosition()[1] + (self.GetPosition()[1] - 300)]
+                else:
+                    print(self.GetPosition()[1])
+                    self.point = [self.GetPosition()[0] - 20, self.GetPosition()[1] - (self.GetPosition()[1]-300)]
+            # if (collisions[0].type == "horizont"):
+            #     self.point = [self.GetPosition()[0] - 10][self.GetPosition()[1] - 10]
+            # if (collisions[0].type == "dead"):
+                # self.speedvector = self.speedvector * ([-1, -1])
+                # self.point = [self.GetPosition() - 10][self.GetPosition() - 10]
+
 
         if (self.oxygen == 0):
             global DIED
@@ -115,12 +97,11 @@ class Agent(pygame.sprite.Sprite):
             self.state = "dead"
             self.image.fill((250, 0, 0))
             self.speedvector = self.speedvector * ([0, 0])
-            # walls.add(Wall(self.GetPosition()[0],self.GetPosition()[1], 10, 10, "dead", (250, 0, 0)))
-            # survivors.remove(self)
 
         if (self.oxygen <= T / 2 and self.oxygen > 0 and self.state != "found"):
             self.image.fill((0, 150, 0))
             self.state = "ill"
+        self.move()
 
     def move(self):
         self.rect.center = (self.speed* round(self.speedvector[0],2) + self.rect.center[0],self.speed* round(self.speedvector[1],2) + self.rect.center[1])
@@ -148,16 +129,9 @@ exits = pygame.sprite.Group()
 walls.add(Wall(400, 50, 500, 10, "horizont", (15, 125, 125)))
 walls.add(Wall(400, 350, 500, 10, "horizont", (15, 125, 125)))
 walls.add(Wall(150, 200, 10, 300, "vertical", (15, 125, 125)))
-walls.add(Wall(650, 200, 10, 300, "vertical", (15, 125, 125)))
+walls.add(Wall(650, 110, 10, 130, "vertical", (15, 125, 125)))
 
-# sprawdzanie odleglosci 20 jednostek do ok exit
-exits.add(Wall(650, 200, 10, 70, "exit", (15, 125, 125)))
-exits.add(Wall(150, 200, 10, 70, "exit", (15, 125, 125)))
-
-exits.add(Wall(650, 200, 20, 50, "exit", (250, 250, 250)))
-exits.add(Wall(150, 200, 20, 50, "exit", (250, 250, 250)))
-
-# survivors.add(Agent(10, 10))
+walls.add(Wall(650, 290, 10, 130, "vertical", (15, 125, 125)))
 
 # losowanie polozenia dla Agentow
 for i in range(N):
@@ -197,6 +171,5 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-            # sys.exit()
     pygame.display.update()
     clock.tick(30)
