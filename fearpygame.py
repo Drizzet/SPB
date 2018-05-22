@@ -34,18 +34,17 @@ class Agent(pygame.sprite.Sprite):
         self.panic = N / A
         self.speedvector = np.array([1.0, 1.0])
         self.point = [0, 0]
-        self.iteration=random.randint(10,50)
-
+        self.iteration = random.randint(10, 50)
 
     def computeVector(self):
         # print((float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0))
         # self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / (self.point[0]+ 0.0)
         # self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / (self.point[0]+ 0.0)
-        self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0]+ 0.0) / 100.0
-        self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1]+ 0.0) / 100.0
+        self.speedvector[0] = (float)(self.point[0] - self.GetPosition()[0] + 0.0) / 100.0
+        self.speedvector[1] = (float)(self.point[1] - self.GetPosition()[1] + 0.0) / 100.0
 
     def GetPosition(self):
-        pos = np.array([self.rect.center[0],self.rect.center[1]])
+        pos = np.array([self.rect.center[0], self.rect.center[1]])
         return pos
 
     def update(self, survivors, walls, exits):
@@ -54,14 +53,19 @@ class Agent(pygame.sprite.Sprite):
         global A
         self.oxygen = self.oxygen - 1
         print(self.point, self.GetPosition(), self.speedvector)
-        self.computeVector()
         self.move()
+        self.computeVector()
         self.iteration -= 1
-        if(self.iteration<0):
+        if (self.iteration < 0):
             self.iteration = random.randint(10, 50)
-            x = random.randint(170, 600)
-            y = random.randint(100, 300)
-            self.point = [x,y]
+            a = random.randint(10, 140)
+            b = random.randint(660, 790)
+            x = random.choice((a, b))
+            a = random.randint(10, 40)
+            b = random.randint(360, 390)
+            y = random.choice((a, b))
+            print("LOSUJE", x, y)
+            self.point = [x, y]
 
         suma = 0
         n = 0
@@ -123,7 +127,8 @@ class Agent(pygame.sprite.Sprite):
             self.state = "ill"
 
     def move(self):
-        self.rect.center = (self.speed* round(self.speedvector[0],2) + self.rect.center[0],self.speed* round(self.speedvector[1],2) + self.rect.center[1])
+        self.rect.center = (self.speed * round(self.speedvector[0], 2) + self.rect.center[0],
+                            self.speed * round(self.speedvector[1], 2) + self.rect.center[1])
 
 
 class Wall(pygame.sprite.Sprite):
@@ -170,7 +175,7 @@ for i in range(N):
 for person in survivors:
     x = random.randint(170, 600)
     y = random.randint(100, 300)
-    person.point =np.array([x, y])
+    person.point = np.array([x, y])
 
 while True:
     screen.fill((255, 255, 255))
